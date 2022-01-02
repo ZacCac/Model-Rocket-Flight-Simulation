@@ -6,6 +6,7 @@ Created on Wed Dec 29 11:21:52 2021
 """
 
 import numpy as np
+import csv
 
 # =============================================================================
 # Adjustable Variables
@@ -20,7 +21,6 @@ initial_mass = 1.0 # kg
 # Final mass of the rocket, determined from the initial mass and subtracting
 # the amount of propellant used. Based on Estes F-15 motor 
 final_mass = initial_mass - 0.0600 # kg
-
 
 
 # =============================================================================
@@ -46,7 +46,42 @@ def calculate_mass():
         
     return mass
 
+# Thrust is imported from a csv file.
+# In the csv, the thrust is recorded at uneven time intervals.
+# Function returns array of thrust data with interpolated values between the 
+# original time intervals
+def interpolate_thrust():
+    
+    # Burntime of the Estes F-15 motor
+    burntime = 3.450 # sec
+    
+    # Initializing empty thrust array
+    arr_size = int(sim_time * 1000 + 1)
+    thrust = np.empty(arr_size, dtype='float')
+    thrust[:] = np.NaN
 
+    count = 0
+    
+    with open('Estes_F15.csv', newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            #row[0] is time
+            #row[1] is thrust
+            
+            # First 5 entries in csv are skipped, unnecessary values
+            if count >= 5:  
+                # Time in which the thrust is recorded
+                time_index = int(float(row[0]) * 1000)
+                
+                thrust[time_index] = float(row[1])
+            else:
+                count += 1
+                
+    # After burnout, thrust will be zero for the rest of the flight
+    if sim_time > burntime:
+        thrust[int(burntime * 1000):arr_size] = 0
+            
+    return thrust
 
 
 # =============================================================================
@@ -54,11 +89,15 @@ def calculate_mass():
 # =============================================================================
 
 time = np.arange(0.0, sim_time + 0.001, 0.001)
+
+thrust = interpolate_thrust()
+
 mass = calculate_mass()
-thrust = []
-accel = []
-velocity = []
-position = []
+
+accel = np.array([0.0])
+velocity = np.array([0.0])
+position = np.array([0.0])
+
 
 
 
