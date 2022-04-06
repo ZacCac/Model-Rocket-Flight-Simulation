@@ -1,8 +1,4 @@
-"motor:","Estes F15"
-"contributor:","Mike Haberer"
-"details:","https://www.thrustcurve.org/simfiles/5f923edb1bca5800041716ab}/"
-
-"Time (s)","Thrust (N)"
+# Time [sec], Thrust [N]
 0,0
 0.148,7.638
 0.228,12.253
