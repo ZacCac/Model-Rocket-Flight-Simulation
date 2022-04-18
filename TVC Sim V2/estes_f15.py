@@ -22,6 +22,7 @@ class F15:
     interpolate_thrust(self, sim_time)
         creates a thrust curve csv with the specified sim_time
         updates the thrust attribute
+        
 
     '''
     def __init__(self):

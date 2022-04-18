@@ -24,6 +24,12 @@ initial_angle = 5.0 # deg
 # Motor used for the simulation
 motor = es.F15()
 
+# Time between each step in the simulation (one millisecond)
+dt = 0.001 # sec
+
+# PID interval (10 milliseconds)
+PID_interval = 0.010 # sec
+
 # If no thrust curve has been created, create it
 if not os.path.exists('interpolated_thrust.csv'):
     motor.interpolate_thrust(sim_time)
@@ -57,7 +63,6 @@ def calculate_mass():
 
 
 arr_size = int(sim_time * 1000 + 1)
-dt = 0.001 # sec
 
 thrust = motor.thrust
 mass = calculate_mass()
@@ -68,6 +73,20 @@ velocity_x = np.zeros([arr_size])
 velocity_y = np.zeros([arr_size])
 position_x = np.zeros([arr_size])
 position_y = np.zeros([arr_size])
+
+PID_angle = np.zeros([arr_size])
+
+
+# =============================================================================
+# PID
+# =============================================================================
+
+def PID():
+    pid_p = 0
+    pid_i = 0
+    pid_d = 0
+
+
 
 # =============================================================================
 # Simulation
@@ -82,9 +101,10 @@ def simulate():
         # Converting angle to radians
         rocket_angle = initial_angle * np.pi / 180
 
-        # Calculating the accelerations
-        acceleration_y[row] = np.cos(rocket_angle) * thrust[row] / mass[row] - 9.8 # m/s^2
-        acceleration_x[row] = np.sin(rocket_angle) * thrust[row] / mass[row]       # m/s^2
+        # Calculating the accelerations [m/s^2]
+        acceleration_y[row] = (
+            np.cos(rocket_angle) * thrust[row] / mass[row] - 9.8)
+        acceleration_x[row] = np.sin(rocket_angle) * thrust[row] / mass[row]
 
         # Previous values
         prev_position_y = position_y[row - 1]
@@ -103,19 +123,36 @@ def simulate():
         velocity_x[row] = acceleration_x[row] * dt + prev_velocity_x
         position_y[row] = velocity_y[row] * dt + prev_position_y
         position_x[row] = velocity_x[row] * dt + prev_position_x
-
-        # velocity[row] = accel[row] * dt + velocity[row - 1]
-
-        # # Accounting for angle
-        # x_position[row] += np.sin(initial_angle * np.pi / 180) * velocity[row] * dt + x_position[row - 1]
-        # y_position[row] += np.cos(initial_angle * np.pi / 180) * velocity[row] * dt + y_position[row - 1]
         
 # =============================================================================
 # Plotting
 # =============================================================================
 
 def plot():
-    df_from_arr.plot(subplots=True, layout=(3,3))
+
+    fig, axs = plt.subplots(3, 3)
+    fig.suptitle('Simulation Output')
+    axs[0, 0].plot(thrust)
+    axs[0, 0].set(xlabel='time (ms)', ylabel='Thrust (N)')
+    axs[0, 1].plot(mass)
+    axs[0, 1].set(xlabel='time (ms)', ylabel='mass (kg)')
+    axs[0, 2].plot(acceleration_x)
+    axs[0, 2].set(xlabel='time (ms)', ylabel='X Accel (m/s^2)')
+    axs[1, 0].plot(acceleration_y)
+    axs[1, 0].set(xlabel='time (ms)', ylabel='Y Accel (m/s^2)')
+    axs[1, 1].plot(velocity_x)
+    axs[1, 1].set(xlabel='time (ms)', ylabel='X Velocity (m/s)')
+    axs[1, 2].plot(velocity_y)
+    axs[1, 2].set(xlabel='time (ms)', ylabel='Y Velocity (m/s)')
+    axs[2, 0].plot(position_x)
+    axs[2, 0].set(xlabel='time (ms)', ylabel='X Position (m)')
+    axs[2, 1].plot(position_y)
+    axs[2, 1].set(xlabel='time (ms)', ylabel='Y Position (m)')
+    axs[2, 2].plot(position_x, position_y)
+    axs[2, 2].set(xlabel='X Position (m)', ylabel='Y Position (m)')
+    
+    #df_from_arr.index.name = 'time (ms)'
+    #df_from_arr.plot(subplots=True, layout=(3,3))
     #df_from_arr.plot(y='ypos', x='xpos')#use_index=True)
     plt.show()
 
@@ -125,9 +162,12 @@ def plot():
 
 simulate()
 
-df_from_arr = pd.DataFrame(data=[thrust, mass, acceleration_x, acceleration_y, velocity_x , velocity_y, position_x, position_y])
-df_from_arr = df_from_arr.T
-df_from_arr.columns = ['thrust', 'mass', 'accelx', 'accely', 'velocityx', 'velocityy', 'xpos', 'ypos']
-df_from_arr.to_csv('out.csv', sep=',', index=False)
+#df = pd.DataFrame(
+#    data=[thrust, mass, acceleration_x, acceleration_y, velocity_x ,
+#    velocity_y, position_x, position_y])
+#df = df.T
+#df.columns = ['thrust', 'mass', 'accelx', 'accely', 'velocityx', 
+#    'velocityy', 'xpos', 'ypos']
+#df.to_csv('out.csv', sep=',', index=False)
 
 plot()
