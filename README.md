@@ -1,5 +1,5 @@
 # TVC Simulation
-**The simulation does not currently support TVC** \
+**The simulation does not currently support TVC, it is just a physics simulation** \
 2D simulation of the flight of a rocket with an Estes-15 motor. 
 
 ## Parameters:
